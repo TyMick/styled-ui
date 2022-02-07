@@ -5,7 +5,7 @@ import { colors } from '../shared-styles';
 import { ChevronDown } from '../icons/12px';
 import { Checkbox } from '../../components/check-box';
 import { DebouncedSelectAsync, DebouncedSelectAsyncCreatable } from './debounced-async';
-import { useClearableSelectValue } from './use-clearable-select-value';
+import { useSelectValues } from './use-clearable-select-value';
 import * as Styled from './styled';
 import { ThemedBox } from '../ThemedBox';
 import { useTheme } from '../../theme';
@@ -304,25 +304,22 @@ export function useCommonSelectProps(props, ref) {
 		onInputChange,
 		isClearable,
 		isMulti,
+		shouldRenderValueInInput,
 		...otherProps
 	} = props;
 
 	const body = useBody();
 	const theme = useTheme();
-	const {
-		innerValue,
-		innerOnChange,
-		innerInputValue,
-		innerOnInputChange,
-	} = useClearableSelectValue({
+	const { innerValue, innerOnChange, innerInputValue, innerOnInputChange } = useSelectValues({
 		value,
-		defaultValue,
 		onChange,
+		defaultValue,
 		inputValue,
-		defaultInputValue,
 		onInputChange,
+		defaultInputValue,
 		isClearable,
 		isMulti,
+		shouldRenderValueInInput,
 	});
 
 	return {
@@ -341,6 +338,7 @@ export function useCommonSelectProps(props, ref) {
 		onInputChange: innerOnInputChange,
 		isClearable: isClearable,
 		isMulti: isMulti,
+		controlShouldRenderValue: !shouldRenderValueInInput,
 		...otherProps,
 	};
 }

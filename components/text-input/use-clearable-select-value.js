@@ -5,47 +5,62 @@ import { useOptionallyControlledState } from '../utils/use-optionally-controlled
  * A React Select workaround to clear the `Select` value when the user is typing into the `Select`'s
  * input (as long as the `Select` is only for a single value and is clearable).
  */
-export function useClearableSelectValue({
+export function useSelectValues({
 	value: controlledSelectValue,
-	defaultValue: defaultSelectValue,
 	onChange: onSelectChange,
+	defaultValue: defaultSelectValue,
 	inputValue: controlledInputValue,
-	defaultInputValue,
 	onInputChange,
+	defaultInputValue,
 	isClearable,
 	isMulti,
+	shouldRenderValueInInput,
 }) {
-	const [selectValue, trySetSelectValue] = useOptionallyControlledState(
+	const [selectValue, localOnSelectChange] = useOptionallyControlledState(
 		controlledSelectValue,
+		onSelectChange,
 		defaultSelectValue,
 	);
-	const [inputValue, trySetInputValue] = useOptionallyControlledState(
+	const selectLabel = selectValue?.label;
+	const [inputValue, localOnInputChange] = useOptionallyControlledState(
 		controlledInputValue,
-		defaultInputValue,
+		onInputChange,
+		defaultInputValue !== undefined ? defaultInputValue : selectValue?.label,
 	);
 
 	const innerOnSelectChange = useCallback(
 		(newSelectValue, meta) => {
-			trySetSelectValue(newSelectValue);
-			if (onSelectChange) {
-				onSelectChange(newSelectValue, meta);
+			localOnSelectChange(newSelectValue, meta);
+
+			if (shouldRenderValueInInput) {
+				localOnInputChange(newSelectValue?.label, { action: 'set-value' });
 			}
 		},
-		[onSelectChange, trySetSelectValue],
+		[localOnInputChange, localOnSelectChange, shouldRenderValueInInput],
 	);
 	const innerOnInputChange = useCallback(
 		(newInputValue, meta) => {
 			const userIsTyping = meta.action === 'input-change';
 			if (isClearable && !isMulti && userIsTyping) {
-				innerOnSelectChange(null, { action: 'set-value' });
+				/** @todo Determine if this is a breaking change */
+				localOnSelectChange(null, { action: 'clear' });
 			}
 
-			trySetInputValue(newInputValue);
-			if (onInputChange) {
-				onInputChange(newInputValue, meta);
+			// The inner 'set-value' action is always accompanied by newInputValue = '' (see https://github.com/JedWatson/react-select/blob/react-select@3.2.0/packages/react-select/src/Select.js#L644)
+			if (shouldRenderValueInInput && meta.action !== 'input-change') {
+				localOnInputChange(selectLabel, meta);
+			} else {
+				localOnInputChange(newInputValue, meta);
 			}
 		},
-		[innerOnSelectChange, isClearable, isMulti, onInputChange, trySetInputValue],
+		[
+			isClearable,
+			isMulti,
+			localOnInputChange,
+			localOnSelectChange,
+			selectLabel,
+			shouldRenderValueInInput,
+		],
 	);
 
 	return {

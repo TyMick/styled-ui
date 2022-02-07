@@ -22,6 +22,7 @@ state: { selection: '' }
 <div>
 	<div>Current selection: {state.selection}</div>
 	<Select
+		shouldRenderValueInInput
 		onChange={selectedOption => setState({ selection: selectedOption ? selectedOption.value : '' })}
 		options={[
 			{ value: "washington", label: "Washington" },
